@@ -1,8 +1,11 @@
 #!/usr/bin/env bun
+import process from 'node:process';
+import { existsSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
+import path from 'node:path';
 import plugin from 'bun-plugin-tailwind';
-import { existsSync } from 'fs';
-import { rm } from 'fs/promises';
-import path from 'path';
+
+/* eslint-disable @typescript-eslint/naming-convention */
 
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
   console.log(`
@@ -33,15 +36,17 @@ Example:
   process.exit(0);
 }
 
-const toCamelCase = (str: string): string =>
-  str.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+const toCamelCase = (string_: string): string =>
+  string_.replaceAll(/-([a-z])/g, (_match, letter: string) =>
+    letter.toUpperCase(),
+  );
 
-const parseValue = (value: string): any => {
+const parseValue = (value: string): unknown => {
   if (value === 'true') return true;
   if (value === 'false') return false;
 
-  if (/^\d+$/.test(value)) return parseInt(value, 10);
-  if (/^\d*\.\d+$/.test(value)) return parseFloat(value);
+  if (/^\d+$/.test(value)) return Number.parseInt(value, 10);
+  if (/^\d*\.\d+$/.test(value)) return Number.parseFloat(value);
 
   if (value.includes(',')) return value.split(',').map((v) => v.trim());
 
@@ -49,7 +54,7 @@ const parseValue = (value: string): any => {
 };
 
 function parseArgs(): Partial<Bun.BuildConfig> {
-  const config: Partial<Bun.BuildConfig> = {};
+  const config: Record<string, unknown> = {};
   const args = process.argv.slice(2);
 
   for (let i = 0; i < args.length; i++) {
@@ -63,10 +68,10 @@ function parseArgs(): Partial<Bun.BuildConfig> {
       continue;
     }
 
-    if (
-      !arg.includes('=') &&
-      (i === args.length - 1 || args[i + 1]?.startsWith('--'))
-    ) {
+    const nextArg = args[i + 1];
+    const nextIsOption = nextArg?.startsWith('--') === true;
+
+    if (!arg.includes('=') && (i === args.length - 1 || nextIsOption)) {
       const key = toCamelCase(arg.slice(2));
       config[key] = true;
       continue;
@@ -85,15 +90,18 @@ function parseArgs(): Partial<Bun.BuildConfig> {
     key = toCamelCase(key);
 
     if (key.includes('.')) {
-      const [parentKey, childKey] = key.split('.');
-      config[parentKey] = config[parentKey] || {};
-      config[parentKey][childKey] = parseValue(value);
+      const [parentKey = '', childKey = ''] = key.split('.');
+      if (parentKey.length > 0 && childKey.length > 0) {
+        config[parentKey] ??= {};
+        (config[parentKey] as Record<string, unknown>)[childKey] =
+          parseValue(value);
+      }
     } else {
       config[key] = parseValue(value);
     }
   }
 
-  return config;
+  return config as Partial<Bun.BuildConfig>;
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -112,7 +120,7 @@ const formatFileSize = (bytes: number): string => {
 console.log('\n🚀 Starting build process...\n');
 
 const cliConfig = parseArgs();
-const outdir = cliConfig.outdir || path.join(process.cwd(), 'dist');
+const outdir = cliConfig.outdir ?? path.join(process.cwd(), 'dist');
 
 if (existsSync(outdir)) {
   console.log(`🗑️ Cleaning previous build at ${outdir}`);
@@ -153,3 +161,4 @@ console.table(outputTable);
 const buildTime = (end - start).toFixed(2);
 
 console.log(`\n✅ Build completed in ${buildTime}ms\n`);
+/* eslint-enable @typescript-eslint/naming-convention */

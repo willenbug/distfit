@@ -1,3 +1,39 @@
 [tools]
-node = "lts"
-prettier = "latest"
+bun = { version = "latest" }
+
+[tasks.format]
+description = "Format code with Prettier (write changes)"
+run = "bun run prettier --write ."
+
+[tasks.format_check]
+description = "Check Prettier formatting"
+run = "bun run prettier --check ."
+
+[tasks.lint]
+description = "Run XO lint"
+run = "bun run xo"
+
+[tasks.test]
+description = "Run unit tests"
+run = "bun test"
+
+[tasks.test_coverage]
+description = "Run tests with coverage (no LCOV)"
+run = "bun test --coverage"
+
+[tasks.test_coverage_report]
+description = "Run tests with coverage and generate LCOV"
+run = "bun test --coverage --coverage-reporter=lcov"
+
+[tasks.build]
+description = "Build production bundle"
+run = "bun run build"
+
+[tasks.checks]
+description = "Local checks: format, lint, tests, build"
+depends = ["format", "lint", "test", "build"]
+
+[tasks.ci]
+description = "CI pipeline for GitHub Actions"
+depends = ["format_check", "lint", "test_coverage_report", "build"]
+

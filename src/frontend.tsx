@@ -5,22 +5,24 @@
  * It is included in `src/index.html`.
  */
 
-import { StrictMode } from 'react';
+import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
+import { App } from './app.tsx';
 
-const elem = document.getElementById('root')!;
+const element = document.querySelector('#root')!;
 const app = (
   <StrictMode>
     <App />
   </StrictMode>
 );
 
-if (import.meta.hot) {
-  // With hot module reloading, `import.meta.hot.data` is persisted.
-  const root = (import.meta.hot.data.root ??= createRoot(elem));
-  root.render(app);
-} else {
+if (import.meta.hot === undefined) {
   // The hot module reloading API is not available in production.
-  createRoot(elem).render(app);
+  createRoot(element).render(app);
+} else {
+  // With hot module reloading, `import.meta.hot.data` is persisted.
+  const root = (import.meta.hot.data.root ??= createRoot(element)) as {
+    render(node: React.ReactNode): void;
+  };
+  root.render(app);
 }

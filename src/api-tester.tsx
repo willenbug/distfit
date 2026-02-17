@@ -1,31 +1,31 @@
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useRef } from 'react';
+import { Button } from '@/components/ui/button.tsx';
+import { Input } from '@/components/ui/input.tsx';
+import { Label } from '@/components/ui/label.tsx';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { useRef, type FormEvent } from 'react';
+} from '@/components/ui/select.tsx';
+import { Textarea } from '@/components/ui/textarea.tsx';
 
-export function APITester() {
+export function ApiTester() {
   const responseInputRef = useRef<HTMLTextAreaElement>(null);
 
-  const testEndpoint = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const testEndpoint = async (event: React.SyntheticEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
     try {
-      const form = e.currentTarget;
+      const form = event.currentTarget;
       const formData = new FormData(form);
       const endpoint = formData.get('endpoint') as string;
       const url = new URL(endpoint, location.href);
       const method = formData.get('method') as string;
-      const res = await fetch(url, { method });
+      const response = await fetch(url, { method });
 
-      const data = await res.json();
+      const data: unknown = await response.json();
       responseInputRef.current!.value = JSON.stringify(data, null, 2);
     } catch (error) {
       responseInputRef.current!.value = String(error);
@@ -34,11 +34,11 @@ export function APITester() {
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={testEndpoint} className="flex items-center gap-2">
-        <Label htmlFor="method" className="sr-only">
+      <form className="flex items-center gap-2" onSubmit={testEndpoint}>
+        <Label className="sr-only" htmlFor="method">
           Method
         </Label>
-        <Select name="method" defaultValue="GET">
+        <Select defaultValue="GET" name="method">
           <SelectTrigger className="w-[100px]" id="method">
             <SelectValue placeholder="Method" />
           </SelectTrigger>
@@ -47,29 +47,29 @@ export function APITester() {
             <SelectItem value="PUT">PUT</SelectItem>
           </SelectContent>
         </Select>
-        <Label htmlFor="endpoint" className="sr-only">
+        <Label className="sr-only" htmlFor="endpoint">
           Endpoint
         </Label>
         <Input
-          id="endpoint"
-          type="text"
-          name="endpoint"
           defaultValue="/api/hello"
+          id="endpoint"
+          name="endpoint"
           placeholder="/api/hello"
+          type="text"
         />
         <Button type="submit" variant="secondary">
           Send
         </Button>
       </form>
-      <Label htmlFor="response" className="sr-only">
+      <Label className="sr-only" htmlFor="response">
         Response
       </Label>
       <Textarea
         ref={responseInputRef}
-        id="response"
         readOnly
-        placeholder="Response will appear here..."
         className="min-h-[140px] font-mono resize-y"
+        id="response"
+        placeholder="Response will appear here..."
       />
     </div>
   );
